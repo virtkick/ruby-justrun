@@ -37,8 +37,6 @@ describe JustRun do
 
 
     it 'should support live chat with the started command' do
-      did = {}
-      lorem_ipsum = LoremIpsum.lorem_ipsum(paragraphs: 100000)
       got_world = false
       JustRun.command 'read line; echo $line; read line; echo $line',
                       init: ->(writer) {

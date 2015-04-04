@@ -1,5 +1,7 @@
 require 'open3'
 
+#TODO: Run multiple commands at the same time
+
 class JustRun
   def self.command(command, block_size: 4096*4, init: ->(writer) {}, &block)
     ret_code = -1
