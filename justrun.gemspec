@@ -1,10 +1,9 @@
 Gem::Specification.new do |s|
   s.name = 'justrun'
-  s.version = '1.0.0'
+  s.version = '1.0.1'
   s.date = '2014-04-03'
-  s.summary = 'Run command and get live line by line callback'
-  s.description = 'Wraps popen3 in a nice interface that allows to just run a command and get live stdout and stderr on line by line basis using a callback'
-  s.authors = ['Damian Kaczmarek']
+  s.summary = 'Run command and get live line by line callbacks'
+  s.description = 'Wraps popen3 in a nice interface that allows to just run a command and get live stdout and stderr on line by line basis using a callback. Additionally a live chat with a command can be implemented with a buffered non-blocking writer that's working out of the box.'  s.authors = ['Damian Kaczmarek']
   s.email = 'rush@virtkick.com'
   s.files = ['lib/justrun.rb']
   s.homepage = 'http://rubygems.org/gems/justrun'
