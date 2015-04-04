@@ -34,6 +34,7 @@ end
 ### Writer interface
 * `writer.end str = ''` - end stdin once every byte is written, optionally provide some data to write before end
 * `writer.write str` - queue some data to write to the process, data will be written automatically as the process reads it
+* `writer.puts str` - same as write but add newline to str
 
 ## License
 MIT
