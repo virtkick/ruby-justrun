@@ -50,6 +50,32 @@ describe JustRun do
       end
       expect(got_world).to eq(true)
     end
+
+    it 'should pass current environment by default' do
+      did = {}
+      ENV['JUSTRUN_TEST'] = 'test'
+      JustRun.command 'echo $JUSTRUN_TEST' do |line, type|
+        did[type] = line
+      end
+      ENV.delete('JUSTRUN_TEST')
+      expect(did).to eq({
+          stdout: 'test'
+      })
+    end
+
+    it 'should allow to pass environment variable without affecting current environment' do
+      did = {}
+      JustRun.command 'echo $JUSTRUN_TEST2', env: {
+        'JUSTRUN_TEST2' => 'test2'
+      } do |line, type|
+        did[type] = line
+      end
+      expect(ENV['JUSTRUN_TEST2']).to eq(nil)
+      expect(did).to eq({
+        stdout: 'test2'
+      })
+    end
+
   end
 end
 
