@@ -3,11 +3,28 @@ require 'open3'
 #TODO: Run multiple commands at the same time
 
 class JustRun
-  def self.command(command, block_size: 4096*4, init: ->(writer) {}, env: ENV, &block)
+  def self.command(command, block_size: 4096*4, buffer_output: false, init: ->(writer) {}, env: ENV, &block)
     ret_code = -1
+
+    buffers = {
+        stdout: [],
+        stderr: [],
+        all: []
+    }
+
     Open3.popen3 env, command do |stdin, stdout, stderr, wait_thr|
       writer = JustRun::Writer.new stdin
       init.call writer
+
+      line_handler = -> line, name {
+        if buffer_output
+          buffers[name].push line
+          buffers[:all].push line
+        end
+        if block
+          block.call line, name, writer
+        end
+      }
 
       fileno_lines = {}
       begin
@@ -25,6 +42,7 @@ class JustRun
               fileno_lines[fileno] ||= []
               lines = fileno_lines[fileno]
               name = fileno2name[fileno]
+
               begin
                 data = f.read_nonblock block_size
                 lines_new = data.lines
@@ -33,7 +51,8 @@ class JustRun
                 end
                 lines.push(*lines_new)
                 while lines[0] =~ /\n\r?/
-                  block.call lines.shift.chomp, name, writer
+                  line = lines.shift.chomp
+                  line_handler.call line, name
                 end
               rescue EOFError => e
                 # expected
@@ -48,7 +67,7 @@ class JustRun
         fileno_lines.each do |fileno, lines|
           name = fileno2name[fileno]
           if lines.length > 0
-            block.call lines.shift.chomp, name, writer
+            line_handler.call lines.shift.chomp, name
           end
         end
       rescue IOError => e
@@ -56,7 +75,17 @@ class JustRun
       end
       ret_code = wait_thr.value
     end
-    ret_code.exitstatus
+
+    if buffer_output
+      {
+        code: ret_code.exitstatus,
+        stderr: buffers[:stderr],
+        stdout: buffers[:stdout],
+        all: buffers[:all]
+      }
+    else
+      ret_code.exitstatus
+    end
   end
 
   private
@@ -75,7 +104,7 @@ class JustRun
     end
 
     def write str
-      @buffer << str;
+      @buffer << str
       process
     end
 

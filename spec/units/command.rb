@@ -76,6 +76,21 @@ describe JustRun do
       })
     end
 
+    it 'should log all stdout of command if requested' do
+      did = {}
+      lorem_ipsum = LoremIpsum.lorem_ipsum(paragraphs: 100000)
+      status = JustRun.command 'cat', init: ->(writer) {
+            writer.end lorem_ipsum
+          }, buffer_output: true
+      expect(status[:stdout].join("\n")).to eq(lorem_ipsum)
+    end
+
+    it 'should log all stderr of command if requested' do
+      did = {}
+      status = JustRun.command 'cat foo/bar/foo', buffer_output: true
+      expect(status[:stderr].join("\n")).to
+        eq('cat: foo/bar/foo: No such file or directory')
+    end
   end
 end
 
