@@ -86,11 +86,15 @@ describe JustRun do
     end
 
     it 'should log all stderr of command if requested' do
-      did = {}
       status = JustRun.command 'cat foo/bar/foo', buffer_output: true
-      expect(status[:stderr].join("\n")).to
-        eq('cat: foo/bar/foo: No such file or directory')
+      expect(status[:stderr].join("\n")).to eq('cat: foo/bar/foo: No such file or directory')
+    end
+    
+    it 'should support chdir' do
+      parent_dir = File.expand_path("..", Dir.pwd)
+      
+      status = JustRun.command 'pwd', chdir: '..', buffer_output: true
+      expect(status[:stdout].join("\n")).to eq(parent_dir)
     end
   end
 end
-

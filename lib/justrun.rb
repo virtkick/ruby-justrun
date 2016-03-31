@@ -3,7 +3,7 @@ require 'open3'
 #TODO: Run multiple commands at the same time
 
 class JustRun
-  def self.command(command, block_size: 4096*4, buffer_output: false, init: ->(writer) {}, env: ENV, &block)
+  def self.command(command, block_size: 4096*4, buffer_output: false, chdir: Dir.pwd, init: ->(writer) {}, env: ENV, &block)
     ret_code = -1
 
     buffers = {
@@ -12,7 +12,7 @@ class JustRun
         all: []
     }
 
-    Open3.popen3 env, command do |stdin, stdout, stderr, wait_thr|
+    Open3.popen3 env, command, chdir: chdir do |stdin, stdout, stderr, wait_thr|
       writer = JustRun::Writer.new stdin
       init.call writer
 
