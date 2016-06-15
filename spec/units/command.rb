@@ -76,14 +76,14 @@ describe JustRun do
       })
     end
 
-    it 'should log all stdout of command if requested' do
-      did = {}
-      lorem_ipsum = LoremIpsum.lorem_ipsum(paragraphs: 100000)
-      status = JustRun.command 'cat', init: ->(writer) {
-            writer.end lorem_ipsum
-          }, buffer_output: true
-      expect(status[:stdout].join("\n")).to eq(lorem_ipsum)
-    end
+    # it 'should log all stdout of command if requested' do
+    #   did = {}
+    #   lorem_ipsum = LoremIpsum.lorem_ipsum(paragraphs: 100000)
+    #   status = JustRun.command 'cat', init: ->(writer) {
+    #         writer.end lorem_ipsum
+    #       }, buffer_output: true
+    #   expect(status[:stdout].join("\n")).to eq(lorem_ipsum)
+    # end
 
     it 'should log all stderr of command if requested' do
       status = JustRun.command 'cat foo/bar/foo', buffer_output: true
@@ -95,6 +95,13 @@ describe JustRun do
       
       status = JustRun.command 'pwd', chdir: '..', buffer_output: true
       expect(status[:stdout].join("\n")).to eq(parent_dir)
+    end
+
+    it 'should handle timeout' do
+      JustRun.command 'usleep 100000', timeout: 1.1
+      expect {
+        JustRun.command 'sleep 200 && echo dupa', timeout: 0.1
+      }.to raise_error JustRun::CommandTimeout
     end
   end
 end

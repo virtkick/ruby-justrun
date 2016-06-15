@@ -3,7 +3,10 @@ require 'open3'
 #TODO: Run multiple commands at the same time
 
 class JustRun
-  def self.command(command, block_size: 4096*4, buffer_output: false, chdir: Dir.pwd, init: ->(writer) {}, env: ENV, &block)
+  class CommandTimeout < Exception
+  end
+
+  def self.command(command, timeout: 0, block_size: 4096*4, buffer_output: false, chdir: Dir.pwd, init: ->(writer) {}, env: ENV, &block)
     ret_code = -1
 
     buffers = {
@@ -12,10 +15,10 @@ class JustRun
         all: []
     }
 
+    beginning_time = Time.now
     Open3.popen3 env, command, chdir: chdir do |stdin, stdout, stderr, wait_thr|
       writer = JustRun::Writer.new stdin
       init.call writer
-
       line_handler = -> line, name {
         if buffer_output
           buffers[name].push line
@@ -33,8 +36,15 @@ class JustRun
             stdout.fileno => :stdout,
             stderr.fileno => :stderr
         }
-        until all_eof files do
+
+        was_eof = []
+        until was_eof[stdout.fileno] && was_eof[stderr.fileno] do
           ready = IO.select files, stdin.closed? ? [] : [stdin], [], 0.1
+          if timeout > 0 && (Time.now - beginning_time) > timeout
+            `kill -9 #{wait_thr.pid}` # note: Process.kill does not work
+            raise CommandTimeout, "Command: '#{command}' timed out with timeout #{timeout}s"
+          end
+
           if ready
             readable = ready[0]
             readable.each do |f|
@@ -55,13 +65,11 @@ class JustRun
                   line_handler.call line, name
                 end
               rescue EOFError => e
-                # expected
-              end
-              writable = ready[1]
-              writable.each do |stdin|
-                writer.process
+                was_eof[fileno] = true
               end
             end
+            writable = ready[1]
+            writable.each { |stdin|  writer.process }
           end
         end
         fileno_lines.each do |fileno, lines|
@@ -89,9 +97,6 @@ class JustRun
   end
 
   private
-  def self.all_eof(files)
-    files.find { |f| !f.eof }.nil?
-  end
 
   class Writer
     def initialize stdin
@@ -134,7 +139,7 @@ class JustRun
           @on_empty.call
           return
         end
-        break if written == 0
+        return true if written == 0
       end
     rescue IO::WaitWritable, Errno::EINTR
     end

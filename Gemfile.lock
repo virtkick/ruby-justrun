@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    justrun (1.0.3)
+    justrun (1.0.4)
 
 GEM
   remote: https://rubygems.org/
@@ -32,4 +32,4 @@ DEPENDENCIES
   rspec-core (= 3.2.0)
 
 BUNDLED WITH
-   1.10.5
+   1.12.5
